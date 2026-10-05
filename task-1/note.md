@@ -53,4 +53,4 @@ Ref: https://docs.sencha.com/extjs/7.5.0/classic/Ext.grid.column.Widget.html#met
 
 
 # Concern
-- When handler finish execution, local memory will be collected by Ext.jS to cleanup so won't face performance impact.
+- When handler finish execution, local memory will be GC by javascript to cleanup so won't face performance impact.

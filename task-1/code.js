@@ -53,32 +53,29 @@ Ext.application({
               // NAIVE / BROKEN widget column — THIS is what you fix.
               // ====================================================
               {
-                  xtype : 'widgetcolumn',
-                  text  : 'Status',
-                  width : 170,
-
-                  // state is pushed onto the (recycled) widget
-                  // asynchronously. By the time the timer fires, the same
-                  // widget instance may already serve a DIFFERENT record.
-                  onWidgetAttach : function (col, widget, rec) {
-                      Ext.defer(function () {
-                          widget.setText(rec.get('active') ? 'Deactivate' : 'Activate');
-                          widget.setDisabled(!!rec.get('locked'));
-                      }, 30);
-
-                      col._lastRecord = rec;
-                  },
-
-                  widget : {
-                      xtype   : 'button',
-                      handler : function () {
-                          var col = this.getWidgetColumn(),
-                              rec = col._lastRecord;
-
-                          rec.set('active', !rec.get('active'));
-                      }
-                  }
-              }
+                xtype : 'widgetcolumn',
+                text  : 'Status',
+                width : 170,
+            
+                onWidgetAttach : function (col, widget, rec) {
+                    widget.setText(
+                        rec.get('active') ? 'Deactivate' : 'Activate'
+                    );
+                    widget.setDisabled(!!rec.get('locked'));
+                },
+            
+                widget : {
+                    xtype : 'button',
+            
+                    handler : function () {
+                        var rec = this.getWidgetRecord(),
+                            active = !rec.get('active');
+            
+                        rec.set('active', active);
+                        this.setText(active ? 'Deactivate' : 'Activate');
+                    }
+                }
+            }
           ]
       });
   }

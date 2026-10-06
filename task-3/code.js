@@ -52,16 +52,39 @@ Ext.application({
                   // The plain-function form below is the NAIVE version and does
                   // NOT stay in sync when a `hours` cell is edited.
                   // ----------------------------------------------------------
-                  totalHours : function (get) {
-                      return get('entries').sum('hours');
+                  totalHours : {
+                      bind : {
+                          bindTo : '{entries}',
+                          deep   : true
+                      },
+                  
+                      get : function (store) {
+                          return store.sum('hours');
+                      }
                   },
 
-                  saveDisabled : function (get) {
-                      var store = get('entries'),
-                          total = store.sum('hours');
-
-                      return total === 0 || total > 40;   // (also: no invalid-row check yet)
-                  }
+                  saveDisabled : {
+                      bind : {
+                          bindTo : '{entries}',
+                          deep   : true
+                      },
+              
+                      get : function (store) {
+                          var total = store.sum('hours'),
+                              invalid = false;
+              
+                          store.each(function (record) {
+                              var hours = record.get('hours');
+              
+                              if (hours < 0 || hours > 24) {
+                                  invalid = true;
+                                  return false;
+                              }
+                          });
+              
+                          return total === 0 || total > 40 || invalid;
+                      }
+                  }                
               }
           },
 

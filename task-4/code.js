@@ -53,8 +53,51 @@ Ext.define('App.DashboardController', {
   //  - return the promise
   // ---------------------------------------------------------------------
   loadDashboard : function () {
-      // TODO
-  },
+    var controller = this,
+        view = this.getView();
+
+    view.setLoading(true);
+
+    return Ext.Deferred.all([
+        Api.loadProfile(),
+        Api.loadPermissions()
+    ]).then(function (results) {
+        var profile = results[0],
+            permissions = results[1];
+
+        // then dependent: timesheet for profile.employeeId
+        return Api.loadTimesheet(profile.employeeId).then(function (timesheet) {
+            return {
+                profile     : profile,
+                permissions : permissions,
+                timesheet   : timesheet
+            };
+        });
+    }).then(function (data) {
+        if (!view.destroyed) {
+          // guard against destroyed view
+          controller.renderDashboard(data);
+        }
+
+        return data;
+    }).otherwise(function (error) {
+
+        // guard against destroyed view
+        if (!view.destroyed) {
+            Ext.Msg.alert('Error', String(error));
+        }
+
+        // single error handler
+        throw error;
+    }).always(function () {
+
+        // mask on start, ALWAYS unmask
+        // guard against destroyed view
+        if (!view.destroyed) {
+            view.setLoading(false);
+        }
+    });
+},
 
   // Given: renders the result. Call this on success.
   renderDashboard : function (data) {

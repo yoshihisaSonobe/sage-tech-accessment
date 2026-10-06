@@ -5,23 +5,57 @@ Ext.define('App.DirectoryController', {
   // TODO #1: single, replaceable filter by name (case-insensitive substring).
   // The listener is also where you debounce — see the search field below.
   handleSearchChange : function (field, value) {
-      var store = this.getView().getStore();
-      // TODO
-  },
+    var store = this.getView().getStore(),
+        filters = store.getFilters(),
+        filterId = 'employee-name-search';
+
+    filters.removeAtKey(filterId);
+
+    if (value) {
+        filters.add({
+            id            : filterId,
+            property      : 'name',
+            value         : value,
+            anyMatch      : true,
+            caseSensitive : false
+        });
+    }
+},
 
   // TODO #2: raise salary by 10% for ALL records of the chosen dept,
   // batched so the view refreshes ONCE. Use record.set(...).
   handleRaise : function () {
-      var store = this.getView().getStore(),
-          dept  = this.lookup('deptCombo').getValue();
-      // TODO
-  },
+    var store = this.getView().getStore(),
+        dept  = this.lookup('deptCombo').getValue(); //reference for combobox
+
+    store.beginUpdate();
+
+    try {
+        store.each(function (record) {
+            if (record.get('department') === dept) {
+                record.set(
+                    'salary',
+                    Math.round(record.get('salary') * 1.1)
+                );
+            }
+        });
+    } finally {
+      // Just in case, something goes wrong, we still want to release the lock (lock might not be the collect word in this case, but it is the idea)
+        store.endUpdate();
+    }
+},
 
   // TODO #3: pure, synchronous, HTML-encoding salary renderer.
   // Runs MANY times under buffered rendering — formatting only.
   salaryRenderer : function (value) {
-      // TODO
-      return value;
+      var formatted = '$' + Ext.util.Format.number(value, '0,000'), // 50000 -> "$50,000"
+          encoded = Ext.String.htmlEncode(formatted);
+
+      if (value > 50000) {
+          return '<span style="color:red">' + encoded + '</span>';
+      }
+
+      return encoded;
   }
 });
 
@@ -63,7 +97,10 @@ Ext.application({
                   width     : 220,
                   // TODO #1: debounce this — e.g. { fn : 'handleSearchChange', buffer : 300 }
                   listeners : {
-                      change : 'handleSearchChange'
+                    change : {
+                      fn     : 'handleSearchChange',
+                      buffer : 300
+                    }
                   }
               },
               '->',

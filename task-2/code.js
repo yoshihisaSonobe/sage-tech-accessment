@@ -11,14 +11,78 @@ Ext.define('App.ux.StarRating', {
       maxStars : 5
   },
 
-  // TODO: make `value` the default bind target and two-way bindable.
+  defaultBindProperty : 'value',
+
+   // TODO: make `value` the default bind target and two-way bindable.
+  twoWayBindable : {
+      value : 1
+  },
 
   baseCls : 'app-starrating',
 
   // TODO: applyValue  — normalize/clamp to an integer in [0, maxStars]
-  // TODO: updateValue — re-render stars when the value changes (guard render)
-  // TODO: render the stars and handle clicks → setValue(n)
+  applyValue : function (value) {
+        value = Number(value);
 
+        if (!isFinite(value)) {
+        // Let's add some logic on production code?? depends on data-value attribute on <span>
+        return;
+        }
+
+        return Ext.Number.constrain(value, 0, this.getMaxStars()); // Compatible Math.min
+    },
+  // TODO: updateValue — re-render stars when the value changes (guard render)
+
+  updateValue : function (value, oldValue) {
+        // debug purpose
+        // console.log('updateValue:', {
+        //     oldValue : oldValue,
+        //     newValue : value,
+        //     rendered : this.rendered
+        // });
+
+        if (!this.rendered) {
+            return;
+        }
+
+        this.renderStars();
+    }, 
+
+  afterRender : function () {
+        this.callParent(arguments);
+
+        this.renderStars();
+
+        this.el.on('click', this.onStarClick, this, {
+            delegate : '.app-starrating-star'
+        });
+        // this.setValue(7); testing purpose: should clamp to maxStars (5)
+        // this.setValue(-3); testing purpose: should clamp to 0 but default value won't change so this won't execute updateValue function
+    },
+
+    renderStars : function () {
+        var value = this.getValue(),
+            maxStars = this.getMaxStars(),
+            html = [],
+            i;
+
+        for (i = 1; i <= maxStars; i++) {
+            html.push(
+                '<span class="app-starrating-star" data-value="' + i + '">' +
+                    (i <= value ? '★' : '☆') +
+                '</span>'
+            );
+        }
+
+        this.setHtml(html.join(''));
+    },
+
+    // TODO: render the stars and handle clicks → setValue(n)
+    onStarClick : function (event, target) {
+    var value = parseInt(target.getAttribute('data-value'), 10);
+
+    this.setValue(value); // Concept compatible: React setState
+    },
 });
 
 
@@ -41,7 +105,7 @@ Ext.application({
                   xtype      : 'starrating',
                   fieldLabel : 'Overall rating',   // cosmetic; Component ignores it
                   reference  : 'stars',
-                  bind       : '{rating}'
+                  bind       : '{rating}' //default to html: https://docs.sencha.com/extjs/7.5.0/modern/Ext.Editor.html?utm_source=chatgpt.com#property-defaultBindProperty
               },
               {
                   xtype  : 'displayfield',
